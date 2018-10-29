@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
 
     // packet description
     unsigned int seq_num;
-    unsigned int checksum;
+    bool is_check_sum_valid;
     size_t data_length;
     char packet[MAX_PACKET_LENGTH];
     char data[MAX_DATA_LENGTH];
@@ -71,14 +71,18 @@ int main(int argc, char *argv[]) {
         laf++;
 
         // get packet
-        read_packet(packet, &seq_num, &data_length, data, &checksum);
+        read_packet(packet, &seq_num, &data_length, data, &is_check_sum_valid);
 
-        cout << "SeqNum : " << seq_num << " Data Length : " << data_length << " Message : " << data << endl;
+        if (is_check_sum_valid) {
+            cout << "SeqNum : " << seq_num << " Data Length : " << data_length << " Message : " << data << endl;
 
-        // sending ack
-        n = sendto(sock, "Got your message\n", 17, 0, (struct sockaddr *)&from, fromlen);
-        if (n  < 0) {
-            cout << "Error on sending message\n";
+            // sending ack
+            n = sendto(sock, "Got your message\n", 17, 0, (struct sockaddr *)&from, fromlen);
+            if (n  < 0) {
+                cout << "Error on sending message\n";
+            }
+        } else {
+            cout << "Checksum is invalid\n";
         }
     }
 

@@ -15,8 +15,8 @@ using namespace std;
 
 size_t create_packet(char* packet, unsigned int seq_num, size_t data_length, char* data);
 
-void read_packet(char* packet, unsigned int* seq_num, size_t* data_length, char* data, unsigned int* checksum);
+void read_packet(char* packet, unsigned int* seq_num, size_t* data_length, char* data, bool* is_check_sum_valid);
 
-unsigned int count_checksum(size_t* data_length, char* data);
+char count_checksum(size_t data_length, char* data);
 
 #endif

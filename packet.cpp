@@ -11,13 +11,12 @@ size_t create_packet(char* packet, unsigned int seq_num, size_t data_length, cha
 	memcpy(packet+5, &network_data_length, 4);
 	memcpy(packet+9, data, data_length);
 
-	// TODO : needs to be implemented
-	packet[9 + data_length] = 0x1; 
+	packet[9 + data_length] = count_checksum(data_length, data);
 
 	return data_length + (size_t)10;
 }
 
-void read_packet(char* packet, unsigned int* seq_num, size_t* data_length, char* data, unsigned int* checksum) {
+void read_packet(char* packet, unsigned int* seq_num, size_t* data_length, char* data, bool* is_check_sum_valid) {
 	// convert data
 	unsigned int network_seq_num;
 	unsigned int network_data_length;
@@ -30,11 +29,21 @@ void read_packet(char* packet, unsigned int* seq_num, size_t* data_length, char*
 	*data_length = ntohl(network_data_length);
 
 	memcpy(data, packet+9, *data_length);
-	
-	// TODO : count the checksum
-	*checksum = 0x1;
+
+	char sender_check_sum = packet[9 + *data_length];
+	char checksum = count_checksum(*data_length, data);
+
+	*is_check_sum_valid = sender_check_sum == checksum;
 }
 
-unsigned int count_checksum(size_t* data_length, char* data) {
-	return (unsigned int)0;
+char count_checksum(size_t data_length, char* data) {
+	unsigned long sum = 0;
+	for (size_t i = 0; i < data_length; i++) {
+		sum += *data++;
+		if (sum & 0xFF00) {
+			sum &= 0xFF;
+			sum++;
+		}
+	}
+	return (char)(~(sum & 0xFF));
 }
