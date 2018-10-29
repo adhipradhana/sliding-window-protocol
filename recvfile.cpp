@@ -17,6 +17,9 @@ int main(int argc, char *argv[]) {
     struct sockaddr_in server;
     struct sockaddr_in from;
 
+    // sliding window
+    unsigned int laf, lfr;
+
     // packet description
     unsigned int seq_num;
     unsigned int checksum;
@@ -52,6 +55,10 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
+    // sliding window
+    lfr = 0;
+    laf = lfr + window_size;
+
     fromlen = sizeof(struct sockaddr_in);
     while (1) {
     	// blocking receiving message
@@ -59,6 +66,9 @@ int main(int argc, char *argv[]) {
         if (n < 0) {
             cout << "Error on receiving message\n";
         }
+        // berhasil
+        lfr++;
+        laf++;
 
         // get packet
         read_packet(packet, &seq_num, &data_length, data, &checksum);

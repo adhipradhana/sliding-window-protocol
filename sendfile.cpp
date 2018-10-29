@@ -18,6 +18,7 @@ int sock, window_size, buffer_size;
 unsigned int length;
 struct sockaddr_in server, from;
 struct hostent *hp;
+unsigned int lar, lfs;
 
 void get_ack() {
     char buffer[256];
@@ -28,8 +29,8 @@ void get_ack() {
             cout << "Packet loss on sending message" << endl;
             exit(1);
         }
-
-        cout << "Got an ack : " << buffer << endl;
+        lar++;
+        cout << "LAR : " << lar << endl;
     }
 }
 
@@ -68,21 +69,27 @@ int main(int argc, char *argv[]) {
     server.sin_port = htons(atoi(argv[4]));
     length = sizeof(struct sockaddr_in);
 
+    // set last acknowledgement received
+    lar = 0;
+    lfs = 0;
+
     // create thread
     thread receiver_thread(get_ack);
 
     while (1) {
-        // get data
-        strcpy(data, "memek kontol");
+        if (lfs - lar < window_size) {
+            strcpy(data, "memek kontol");
 
-        // create a packet
-        len_packet = create_packet(packet, (unsigned int)1, (size_t)MAX_DATA_LENGTH, data);
+            // create a packet
+            len_packet = create_packet(packet, (unsigned int)lfs, (size_t)13, data);
 
-        // sending packet
-        int packet_size = sendto(sock, packet, len_packet, 0,(const struct sockaddr *) &server,length);
-        if (packet_size < 0) {
-            cout << "Error on sending message" << endl;
-            return -1;
+            // sending packet
+            int packet_size = sendto(sock, packet, len_packet, 0,(const struct sockaddr *) &server,length);
+            if (packet_size < 0) {
+                cout << "Error on sending message" << endl;
+                return -1;
+            }
+            lfs++;
         }
     }
 
