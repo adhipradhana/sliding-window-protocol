@@ -7,18 +7,33 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <thread>
 
 #include "packet.h"
 
 using namespace std;
 
-int main(int argc, char *argv[]) {
-	int sock, n, window_size, buffer_size;
-    unsigned int length;
-    struct sockaddr_in server, from;
-    struct hostent *hp;
+// global variable
+int sock, window_size, buffer_size;
+unsigned int length;
+struct sockaddr_in server, from;
+struct hostent *hp;
+
+void get_ack() {
     char buffer[256];
 
+    while(1) {
+        int ack_size = recvfrom(sock, buffer, 256, 0,(struct sockaddr *)&from, &length);
+        if (ack_size < 0) {
+            cout << "Packet loss on sending message" << endl;
+            exit(1);
+        }
+
+        cout << "Got an ack : " << buffer << endl;
+    }
+}
+
+int main(int argc, char *argv[]) {
     // packet related data
     unsigned int len_packet;
     char data[MAX_DATA_LENGTH];
@@ -53,29 +68,26 @@ int main(int argc, char *argv[]) {
     server.sin_port = htons(atoi(argv[4]));
     length = sizeof(struct sockaddr_in);
 
-    // get data
-    cout << "Please enter the message : ";
-    cin >> data;
+    // create thread
+    thread receiver_thread(get_ack);
 
-    // create a packet
-    len_packet = create_packet(packet, (unsigned int)1, (size_t)MAX_DATA_LENGTH, data);
+    while (1) {
+        // get data
+        strcpy(data, "memek kontol");
 
-    // sending packet
-    n = sendto(sock, packet, len_packet, 0,(const struct sockaddr *) &server,length);
-    if (n < 0) {
-        cout << "Error on sending message" << endl;
-        return -1;
+        // create a packet
+        len_packet = create_packet(packet, (unsigned int)1, (size_t)MAX_DATA_LENGTH, data);
+
+        // sending packet
+        int packet_size = sendto(sock, packet, len_packet, 0,(const struct sockaddr *) &server,length);
+        if (packet_size < 0) {
+            cout << "Error on sending message" << endl;
+            return -1;
+        }
     }
 
-    // receiving ack
-    n = recvfrom(sock, buffer, 256, 0,(struct sockaddr *)&from, &length);
-    if (n < 0) {
-        cout << "Packet loss on sending message" << endl;
-        return -1;
-    }
-
-   	cout << "Got an ack : " << buffer << endl;
-
+    // close thread
+    receiver_thread.join();
     // close the socket
     close(sock);
 
