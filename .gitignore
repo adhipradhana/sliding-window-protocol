@@ -1,3 +1,6 @@
 # executables
-!*.*
+recvfile
+sendfile
 .DS_STORE
+*.jpg
+*.txt

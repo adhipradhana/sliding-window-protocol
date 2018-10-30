@@ -13,13 +13,20 @@
 using namespace std;
 
 int main(int argc, char *argv[]) {
-	int sock, length, n, window_size, buffer_size;
+    // socket variable
+	int sock, socket_length, window_size;
+    unsigned int port;
     socklen_t fromlen;
     struct sockaddr_in server;
     struct sockaddr_in from;
 
     // sliding window
-    unsigned int laf, lfr;
+    int laf, lfr;
+    unsigned int buffer_size, max_buffer_size;
+    char *buffer;
+    char *fname;
+    FILE *file;
+    bool eot;
 
     // packet description
     unsigned int seq_num;
@@ -28,100 +35,134 @@ int main(int argc, char *argv[]) {
     char ack[ACK_LENGTH];
     char packet[MAX_PACKET_LENGTH];
     char data[MAX_DATA_LENGTH];
-    bool* packet_received;
-
+    // bool* packet_received;    
 
     // read data
-    if (argc != 4) {
-    	cerr << "usage: ./recvfile <window_size> <buffer_size> <port>" << endl;
-    	return -1;
+    if (argc != 5) {
+    	cerr << "usage: ./recvfile <filename> <window_size> <buffer_size> <port>" << endl;
+    	exit(1);
     }
-    window_size = atoi(argv[1]);
-    buffer_size = atoi(argv[2]);
+    fname = argv[1];
+    window_size = atoi(argv[2]);
+    max_buffer_size = (unsigned int)1024 * atoi(argv[3]);
+    port = atoi(argv[4]);
 
     // create socket
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
     	cerr << "Error creating socket" << endl;
-    	return -1;
+    	exit(1);
     }
 
     // assigning server port and address
-    length = sizeof(server);
-    bzero(&server, length);
+    socket_length = sizeof(server);
+    bzero(&server, socket_length);
 
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = INADDR_ANY;
-    server.sin_port = htons(atoi(argv[3]));
+    server.sin_port = htons(port);
 
-    if (bind(sock, (struct sockaddr *) &server,length) < 0) {
+    // binding socket
+    if (bind(sock, (struct sockaddr *) &server, socket_length) < 0) {
         cerr << "Can't bind to address" << endl;
-        return -1;
+        exit(1);
     }
 
-    // sliding window
-    lfr = -1;
-    laf = lfr + window_size;
-    packet_received = new bool[window_size];
+    // writing to file
+    file = fopen(fname, "wb");    
 
-    fromlen = sizeof(struct sockaddr_in);
-    while (true) {
-    	// blocking receiving message
-        n = recvfrom(sock, packet, MAX_PACKET_LENGTH, 0, (struct sockaddr *)&from, &fromlen);
-        if (n < 0) {
-            cout << "Error on receiving message\n";
-            exit(1);
+    bool recv_done = false;
+    while (!recv_done) {
+        buffer = new char[max_buffer_size];
+        buffer_size = max_buffer_size;
+
+        unsigned int seq_count = max_buffer_size / MAX_DATA_LENGTH;
+        bool packet_received[window_size];
+        for (int i = 0; i < window_size; i++) {
+            packet_received[i] = false;
         }
 
-        // get packet
-        read_packet(packet, &seq_num, &data_length, data, &is_check_sum_valid);
+        lfr = -1;
+        laf = lfr + window_size;
 
-        if (seq_num <= laf) {
-            cout << "SeqNum : " << seq_num << " Data Length : " << data_length << " Message : " << data << endl;
-
-            // create ack
-            create_ack(ack, seq_num, is_check_sum_valid);
-
-            // sending ack
-            n = sendto(sock, ack, ACK_LENGTH, 0, (struct sockaddr *)&from, fromlen);
-            if (n  < 0) {
-                cout << "Fail sending ack\n";
+        fromlen = sizeof(struct sockaddr_in);
+        while (true) {
+        	// blocking receiving message
+            int packet_size = recvfrom(sock, packet, MAX_PACKET_LENGTH, MSG_WAITALL, (struct sockaddr *)&from, &fromlen);
+            if (packet_size < 0) {
+                cout << "Error on receiving message\n";
+                exit(1);
             }
 
-            if (is_check_sum_valid) {
-                int shift = 0;
+            // get packet
+            read_packet(packet, &seq_num, &data_length, data, &is_check_sum_valid, &eot);
 
-                if (seq_num == lfr +1) {
-                    for (int i = 0; i < window_size; i++) {
-                        shift++;
-                        if (!packet_received[i]) {
-                            break;
+            if (seq_num <= laf) {
+                // create ack
+                create_ack(ack, seq_num, is_check_sum_valid);
+
+                // sending ack
+                int ack_size = sendto(sock, ack, ACK_LENGTH, MSG_WAITALL, (struct sockaddr *)&from, fromlen);
+                if (ack_size < 0) {
+                    cout << "Fail sending ack\n";
+                }
+                if (is_check_sum_valid) {
+                    int buffer_shift = seq_num * MAX_DATA_LENGTH;
+
+                    if (seq_num == lfr + 1) {
+                        memcpy(buffer + buffer_shift, data, data_length);
+                        unsigned int shift = 1;
+                        for (unsigned int i = 1; i < window_size; i++) {
+                            if (!packet_received[i]) {
+                                break;
+                            }
+                            shift++;
+                        }
+                        cout << "shift packet_received\n";
+                        for (unsigned int i = 0; i < window_size - shift; i++) {
+                            packet_received[i] = packet_received[i + shift];
+                        }
+                        cout << "false-in packet_received\n";
+                        for (unsigned int i = window_size - shift; i < window_size; i++) {
+                            packet_received[i] = false;
+                        }
+                        lfr += shift;
+                        laf = lfr + window_size;
+                    } else if (seq_num > lfr + 1) {
+                        if (!packet_received[seq_num - (lfr + 1)]) {
+                            memcpy(buffer + buffer_shift, data, data_length);
+                            packet_received[seq_num - (lfr + 1)] = true;
+
                         }
                     }
 
-                    for (int i = 0; i < window_size - shift; i++) {
-                        packet_received[i] = packet_received[i + shift];
+                    if (eot) {
+                        buffer_size = buffer_shift + data_length;
+                        seq_count = seq_num + 1;
+                        recv_done = true;
+                        cout << "Receive packet eot " << seq_num << endl;
+                        cout << "Sending ack eot " << seq_num << endl;
+                    } else {
+                        cout << "Receive packet  " << seq_num << endl;
+                        cout << "Sending ack  " << seq_num << endl;
                     }
-
-                    for (int i = window_size - shift; i < window_size; i++) {
-                        packet_received[i] = false;
-                    }
-
-                    lfr += shift;
-                    laf = lfr + window_size;
-                } else if (seq_num > lfr + 1) {
-                    packet_received[seq_num - (lfr + 1)] = true;
+                } else {
+                    cout << "ERROR packet " << seq_num << endl;
+                    cout << "Sending NAK : " << seq_num << endl;
                 }
-                cout << "Sending ACK : " << seq_num << endl;
             } else {
-                cout << "Sending NAK : " << seq_num << endl;
+                // sending negative ack
+                cout << "SeqNum out of range : " << seq_num << endl;
             }
-        } else {
-            // sending negative ack
-            cout << "SeqNum out of range : " << seq_num << endl;
+
+            if (lfr == seq_count - 1) {
+                break;
+            }
         }
+
+        fwrite(buffer, 1, buffer_size, file);
     }
 
-
+    fclose(file);
     return 0;
 }

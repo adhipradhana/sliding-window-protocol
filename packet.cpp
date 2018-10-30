@@ -1,12 +1,17 @@
 #include "packet.h"
 
-size_t create_packet(char* packet, unsigned int seq_num, size_t data_length, char* data) {
+size_t create_packet(char* packet, unsigned int seq_num, size_t data_length, char* data, bool eot) {
 	// convert data into network type (big endian/little endian)
 	unsigned int network_seq_num = htonl(seq_num);
 	unsigned int network_data_length = htonl(data_length);
 
 	// copy data into frame
-	packet[0] = 0x1;
+	if (eot) {
+		packet[0] = 0x0;
+	} else {
+		packet[0] = 0x1;
+	}
+
 	memcpy(packet+1, &network_seq_num, 4);
 	memcpy(packet+5, &network_data_length, 4);
 	memcpy(packet+9, data, data_length);
@@ -16,7 +21,7 @@ size_t create_packet(char* packet, unsigned int seq_num, size_t data_length, cha
 	return data_length + (size_t)10;
 }
 
-void read_packet(char* packet, unsigned int* seq_num, size_t* data_length, char* data, bool* is_check_sum_valid) {
+void read_packet(char* packet, unsigned int* seq_num, size_t* data_length, char* data, bool* is_check_sum_valid, bool* eot) {
 	// convert data
 	unsigned int network_seq_num;
 	unsigned int network_data_length;
@@ -34,6 +39,8 @@ void read_packet(char* packet, unsigned int* seq_num, size_t* data_length, char*
 	char checksum = count_checksum(*data_length, data);
 
 	*is_check_sum_valid = sender_check_sum == checksum;
+
+	*eot = packet[0] == 0x0;
 }
 
 char count_checksum(size_t data_length, char* data) {
