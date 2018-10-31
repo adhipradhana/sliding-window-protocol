@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
 
     // sliding window
     int laf, lfr;
-    unsigned int buffer_size, max_buffer_size;
+    int buffer_size, max_buffer_size;
     char *buffer;
     char *fname;
     FILE *file;
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
         buffer = new char[max_buffer_size];
         buffer_size = max_buffer_size;
 
-        unsigned int seq_count = max_buffer_size / MAX_DATA_LENGTH;
+        int seq_count = max_buffer_size / MAX_DATA_LENGTH;
         bool packet_received[window_size];
         for (int i = 0; i < window_size; i++) {
             packet_received[i] = false;
@@ -155,7 +155,8 @@ int main(int argc, char *argv[]) {
                 cout << "SeqNum out of range : " << seq_num << endl;
             }
 
-            if (lfr == seq_count - 1) {
+            // cout << "lfr : " << lfr << "seq_count : " << seq_count << "\n";
+            if (lfr >= seq_count - 1) {
                 break;
             }
         }

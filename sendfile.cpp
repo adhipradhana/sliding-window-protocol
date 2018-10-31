@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <thread>
+#include <mutex>
 
 #include "packet.h"
 #include "ack.h"
@@ -28,6 +29,7 @@ bool *has_packet_send;
 time_stamp *packet_send_time;
 
 time_stamp TMIN = current_time();
+mutex mt;
 
 void get_ack() {
     char ack[ACK_LENGTH];
@@ -44,6 +46,7 @@ void get_ack() {
         read_ack(ack, &is_nak, &seq_num, &is_check_sum_valid);
 
         if (is_check_sum_valid) {
+            mt.lock();
             if (seq_num >= lar + 1 && seq_num <= lfs) {
                 if (!is_nak) {
                     cout << "=========== ACK REPORT ============\n";
@@ -59,6 +62,7 @@ void get_ack() {
             } else {
                 cout << "ACK out of bound " << seq_num << endl;
             }
+            mt.unlock();
         } else {
             cout << "ERROR ACK : " << seq_num << endl;
         }
@@ -67,7 +71,7 @@ void get_ack() {
 
 int main(int argc, char *argv[]) {
     // packet related data
-    unsigned int seq_num;
+    int seq_num;
     unsigned int packet_size, data_size;
     char data[MAX_DATA_LENGTH];
     char packet[MAX_PACKET_LENGTH];
@@ -131,10 +135,11 @@ int main(int argc, char *argv[]) {
         read_done = max_buffer_size > buffer_size;
 
         // Initialized sliding window variable
+        mt.lock();
         has_ack_received = new bool[window_size];
         packet_send_time = new time_stamp[window_size];
         bool has_packet_send[window_size];
-        unsigned int seq_count = buffer_size / MAX_DATA_LENGTH;
+        int seq_count = buffer_size / MAX_DATA_LENGTH;
         if (buffer_size % MAX_DATA_LENGTH) {
             seq_count++;
         }
@@ -149,10 +154,12 @@ int main(int argc, char *argv[]) {
         lar = -1;
         cout << "setting lar into -1" << endl;
         lfs = lar + window_size;
+        mt.unlock();
 
         bool send_done = false;
         while (!send_done) {
             // check shift
+            mt.lock();
             if (has_ack_received[0]) {
                 unsigned int shift = 1;
 
@@ -179,6 +186,7 @@ int main(int argc, char *argv[]) {
                 lfs = lar + window_size;
                 cout <<"lar " << lar << endl;
             }
+            mt.unlock();
 
             for (unsigned int i = 0; i < window_size; i ++) {
                 seq_num = lar + i + 1;
@@ -210,24 +218,24 @@ int main(int argc, char *argv[]) {
                 }
             }
 
-            cout << "lar : " << lar << "\n";
-            cout << "seq_count : " << seq_count << "\n";
+            // cout << "lar : " << lar << "\n";
+            // cout << "seq_count : " << seq_count << "\n";
             if (lar >= seq_count - 1) {
                 send_done = true;
             }
 
-            if (seq_count < window_size) {
-                send_done = true;
-                // cout << "=---------=-==-=-=-=-=-=-\n";
-                for (unsigned int i = 0; i < seq_count; i++) {
-                    send_done &= has_ack_received[i];
-                    // if (!has_ack_received[i]) {
-                    //     send_done = false;
-                    //     break;
-                    // }
-                }
-                // cout << "\nsend done jadinya " << send_done << "\n";
-            }    
+            // if (seq_count < window_size) {
+            //     send_done = true;
+            //     // cout << "=---------=-==-=-=-=-=-=-\n";
+            //     for (unsigned int i = 0; i < seq_count; i++) {
+            //         send_done &= has_ack_received[i];
+            //         // if (!has_ack_received[i]) {
+            //         //     send_done = false;
+            //         //     break;
+            //         // }
+            //     }
+            //     // cout << "\nsend done jadinya " << send_done << "\n";
+            // }    
         }
         cout << "is read done ? " << read_done << "\n";
         if (read_done) {
@@ -236,6 +244,8 @@ int main(int argc, char *argv[]) {
     }
 
     fclose(file);
+    delete[] packet_send_time;
+    delete[] has_ack_received;
     receiver_thread.detach();
     // close(sock);
 
