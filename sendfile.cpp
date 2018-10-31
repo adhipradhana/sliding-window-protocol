@@ -9,6 +9,7 @@
 #include <string.h>
 #include <thread>
 #include <mutex>
+#include <stdio.h>
 
 #include "packet.h"
 #include "ack.h"

@@ -6,6 +6,8 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <netdb.h>
+#include <stdio.h>
+#include <cstdlib>
 
 #include "packet.h"
 #include "ack.h"
@@ -101,11 +103,17 @@ int main(int argc, char *argv[]) {
                 create_ack(ack, seq_num, is_check_sum_valid);
 
                 // Send ack
-                int ack_size = sendto(sock, ack, ACK_LENGTH, MSG_WAITALL, (struct sockaddr *)&from, fromlen);
+                int ack_size;
+                if (rand()%10 == 1)
+                {
+                    cout << "\n\nLOSS\n\nLOSS\n\n";
+                    ack_size = -1;
+                } else {
+                    ack_size = sendto(sock, ack, ACK_LENGTH, MSG_WAITALL, (struct sockaddr *)&from, fromlen);
+                }
                 if (ack_size < 0) {
                     cout << "Fail sending ack\n";
-                }
-                if (is_check_sum_valid) {
+                } else if (is_check_sum_valid) {
                     int buffer_shift = seq_num * MAX_DATA_LENGTH;
 
                     if (seq_num == lfr + 1) {
