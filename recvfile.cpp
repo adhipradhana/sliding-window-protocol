@@ -13,14 +13,14 @@
 using namespace std;
 
 int main(int argc, char *argv[]) {
-    // socket variable
+    // Initialize socket variables
 	int sock, socket_length, window_size;
     unsigned int port;
     socklen_t fromlen;
     struct sockaddr_in server;
     struct sockaddr_in from;
 
-    // sliding window
+    // Initialize sliding window variables
     int laf, lfr;
     int buffer_size, max_buffer_size;
     char *buffer;
@@ -28,16 +28,15 @@ int main(int argc, char *argv[]) {
     FILE *file;
     bool eot;
 
-    // packet description
+    // Initialize packet variables
     unsigned int seq_num;
     bool is_check_sum_valid;
     size_t data_length;
     char ack[ACK_LENGTH];
     char packet[MAX_PACKET_LENGTH];
     char data[MAX_DATA_LENGTH];
-    // bool* packet_received;    
 
-    // read data
+    // Read data
     if (argc != 5) {
     	cerr << "usage: ./recvfile <filename> <window_size> <buffer_size> <port>" << endl;
     	exit(1);
@@ -47,14 +46,14 @@ int main(int argc, char *argv[]) {
     max_buffer_size = (unsigned int)1024 * atoi(argv[3]);
     port = atoi(argv[4]);
 
-    // create socket
+    // Create socket
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
     	cerr << "Error creating socket" << endl;
     	exit(1);
     }
 
-    // assigning server port and address
+    // Assign server port and address
     socket_length = sizeof(server);
     bzero(&server, socket_length);
 
@@ -62,14 +61,14 @@ int main(int argc, char *argv[]) {
     server.sin_addr.s_addr = INADDR_ANY;
     server.sin_port = htons(port);
 
-    // binding socket
+    // Bind socket
     if (bind(sock, (struct sockaddr *) &server, socket_length) < 0) {
         cerr << "Can't bind to address" << endl;
         exit(1);
     }
 
-    // writing to file
-    file = fopen(fname, "wb");    
+    // Write to file
+    file = fopen(fname, "wb");
 
     bool recv_done = false;
     while (!recv_done) {
@@ -87,21 +86,21 @@ int main(int argc, char *argv[]) {
 
         fromlen = sizeof(struct sockaddr_in);
         while (true) {
-        	// blocking receiving message
+        	// Block receiving message
             int packet_size = recvfrom(sock, packet, MAX_PACKET_LENGTH, MSG_WAITALL, (struct sockaddr *)&from, &fromlen);
             if (packet_size < 0) {
                 cout << "Error on receiving message\n";
                 exit(1);
             }
 
-            // get packet
+            // Get packet
             read_packet(packet, &seq_num, &data_length, data, &is_check_sum_valid, &eot);
 
             if (seq_num <= laf) {
-                // create ack
+                // Create ack
                 create_ack(ack, seq_num, is_check_sum_valid);
 
-                // sending ack
+                // Send ack
                 int ack_size = sendto(sock, ack, ACK_LENGTH, MSG_WAITALL, (struct sockaddr *)&from, fromlen);
                 if (ack_size < 0) {
                     cout << "Fail sending ack\n";
@@ -151,11 +150,10 @@ int main(int argc, char *argv[]) {
                     cout << "Sending NAK : " << seq_num << endl;
                 }
             } else {
-                // sending negative ack
+                // Send negative ack
                 cout << "SeqNum out of range : " << seq_num << endl;
             }
 
-            // cout << "lfr : " << lfr << "seq_count : " << seq_count << "\n";
             if (lfr >= seq_count - 1) {
                 break;
             }
