@@ -104,8 +104,7 @@ int main(int argc, char *argv[]) {
                 int ack_size = sendto(sock, ack, ACK_LENGTH, MSG_WAITALL, (struct sockaddr *)&from, fromlen);
                 if (ack_size < 0) {
                     cout << "Fail sending ack\n";
-                }
-                if (is_check_sum_valid) {
+                } else if (is_check_sum_valid) {
                     int buffer_shift = seq_num * MAX_DATA_LENGTH;
 
                     if (seq_num == lfr + 1) {

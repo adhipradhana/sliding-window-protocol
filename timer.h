@@ -5,7 +5,7 @@
 
 using namespace std;
 
-#define TIMEOUT 10
+#define TIMEOUT 1000
 
 #define current_time chrono::high_resolution_clock::now
 #define time_stamp chrono::high_resolution_clock::time_point
