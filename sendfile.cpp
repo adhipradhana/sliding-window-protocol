@@ -71,7 +71,7 @@ void get_ack() {
 
 int main(int argc, char *argv[]) {
     // packet related data
-    int seq_num;
+    unsigned int seq_num;
     unsigned int packet_size, data_size;
     char data[MAX_DATA_LENGTH];
     char packet[MAX_PACKET_LENGTH];
