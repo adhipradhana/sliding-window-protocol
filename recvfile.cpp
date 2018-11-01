@@ -6,6 +6,8 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <netdb.h>
+#include <cstdlib>
+#include <stdio.h>
 
 #include "packet.h"
 #include "ack.h"
