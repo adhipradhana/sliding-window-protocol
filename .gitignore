@@ -4,3 +4,6 @@ sendfile
 .DS_STORE
 *.jpg
 *.txt
+*.avi
+*.png
+*.mp3
