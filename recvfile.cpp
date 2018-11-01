@@ -96,15 +96,18 @@ int main(int argc, char *argv[]) {
             // Get packet
             read_packet(packet, &seq_num, &data_length, data, &is_check_sum_valid, &eot);
 
-            if (seq_num <= laf) {
-                // Create ack
-                create_ack(ack, seq_num, is_check_sum_valid);
+            // Create ack
+            create_ack(ack, seq_num, is_check_sum_valid);
 
-                // Send ack
-                int ack_size = sendto(sock, ack, ACK_LENGTH, MSG_WAITALL, (struct sockaddr *)&from, fromlen);
-                if (ack_size < 0) {
-                    cout << "Fail sending ack\n";
-                } else if (is_check_sum_valid) {
+            // Send ack
+            int ack_size = sendto(sock, ack, ACK_LENGTH, MSG_WAITALL, (struct sockaddr *)&from, fromlen);
+            if (ack_size < 0) {
+                cout << "Fail sending ack\n";
+            }
+
+            if (seq_num <= laf) {
+                
+                if (is_check_sum_valid) {
                     int buffer_shift = seq_num * MAX_DATA_LENGTH;
 
                     if (seq_num == lfr + 1) {
