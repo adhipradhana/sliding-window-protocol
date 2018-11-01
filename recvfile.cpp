@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
             int packet_size = recvfrom(sock, packet, MAX_PACKET_LENGTH, MSG_WAITALL, (struct sockaddr *)&from, &fromlen);
             if (packet_size < 0) {
                 cout << "Error on receiving message\n";
-                exit(1);
+                // exit(1);
             }
 
             // Get packet
@@ -150,6 +150,7 @@ int main(int argc, char *argv[]) {
                 }
             } else {
                 // Send negative ack
+                cout << "lfr : " << lfr << " laf : " << laf << "\n";
                 cout << "SeqNum out of range : " << seq_num << endl;
             }
 

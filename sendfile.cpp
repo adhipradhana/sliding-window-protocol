@@ -40,7 +40,7 @@ void get_ack() {
         int ack_size = recvfrom(sock, ack, ACK_LENGTH, MSG_WAITALL,(struct sockaddr *)&from, &sock_length);
         if (ack_size < 0) {
             cout << "Packet loss on receiving message" << endl;
-            exit(1);
+            // exit(1);
         }
 
         // Create ack from buffer
@@ -193,16 +193,16 @@ int main(int argc, char *argv[]) {
                         int n = sendto(sock, packet, packet_size, MSG_WAITALL, (const struct sockaddr *) &server, sock_length);
                         if (n < 0) {
                             cerr << "ERROR sending packet\n";
-                            exit(1);
-                        }
-
-                        has_packet_send[i] = true;
-                        packet_send_time[i] = current_time();
-
-                        if (!eot) {
-                            cout << "Sending package " << seq_num << endl;
+                            // exit(1);
                         } else {
-                            cout << "Sending eot package " << seq_num << endl;
+                            has_packet_send[i] = true;
+                            packet_send_time[i] = current_time();
+
+                            if (!eot) {
+                                cout << "Sending package " << seq_num << endl;
+                            } else {
+                                cout << "Sending eot package " << seq_num << endl;
+                            }
                         }
                     }
                 }
