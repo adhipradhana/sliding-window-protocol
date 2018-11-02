@@ -101,6 +101,6 @@ $ sudo tc qdisc del dev lo root netem
 3. Ahmad Izzan 13516116
 
 ### Pembagian Kerja
-1. Muhammad Sulthan Adhipradhana : sendfile
-2. Christian Jonathan : Packet + ACK
-3. Ahmad Izzan : checksum + recvfile
+1. Muhammad Sulthan Adhipradhana : sendfile +debug	- 33%
+2. Christian Jonathan : Packet + ACK + debug		- 33%
+3. Ahmad Izzan : checksum + recvfile + debug		- 33%
