@@ -25,15 +25,15 @@ Sender mendefinisikan window dengan memberi tanda menggunakan variabel LAR <i>(L
 Pada <b>sendfile.cpp</b> digunakan 2 thread untuk implementasi sliding windows protocol. thread pertama digunakan untuk mengirimkan paket ke client, thread kedua dipakai untuk menerima ACK atau NAK dari client.
 
 ## Documentation
-<ul style="list-style-type:disc">
+<ul>
 	<li>ack.cpp : Berikut fungsi dan kegunaannya dalam file ack.cpp
-		<ol type="a">
+		<ol>
 			<li>create_ack : Digunakan untuk membuat ACK (digunakan di recvfile yang nanti nya akan dikirim ke sendfile)</li>
 			<li>read_ack : Digunakan untuk membaca ACK (digunakan di sendfile untuk membaca ACK yang dikirim oleh recvfile)</li>
 		</ol>
 	</li>
 	<li>packet.cpp : Berikut fungsi dan kegunaannya dalam file packet.cpp
-		<ol type="a">
+		<ol>
 			<li>create_packet : Digunakan untuk membuat paket (yang akan dikirimkan oleh sendfile dan diterima oleh recvfile)</li>
 			<li>read_packet : Digunakan untuk membaca paket (yang akan dibaca oleh recvfile setelah dikirim oleh sendfile)</li>
 			<li>count_checksum : fungsi validasi checksum apakah paket diterima sesuai atau tidak</li>
@@ -42,7 +42,7 @@ Pada <b>sendfile.cpp</b> digunakan 2 thread untuk implementasi sliding windows p
 	<li>recvfile.cpp : program akan menerima paket. Untuk setiap paket, program akan mengecek apakah paket error atau tidak, jika error, program akan mengirimkan NAK kepada sender. Jika paket tidak error, maka paket akan dimasukan ke dalam buffer. Buffer kemudian akan dituliskan ke file eksternal. Hal ini akan diteruskan hingga eot, setelah mendapatkan sinyal eot, program akan berakhir.
 	</li>
 	<li>sendfile.cpp : Berikut fungsi dan kegunaannya dalam file sendfile.cpp
-		<ol type="a">
+		<ol>
 			<li>get_ack : digunakan untuk menerima ACK/NAK dari recvfile</li>
 			<li>main : Program pertama-tama akan membuka file kemudian membaca besarnya data sesuai ukuran maximum buffer. Kemudian program akan mengirim packet-packet data sejumlah ukuran window. Program akan melakukan iterasi untuk mengecek apakah paket belum dikirim atau paket telah dikirim namun ACK belum didapatkan hingga timeout, jika kondisi ini terpenuhi maka program akan mengirim paket. Jika ACK dengan seqnum bersangkutan telah diterima, maka program akan menggeser buffer. Hal ini akan diteruskan hingga seluruh byte data telah dibaca dan dikirimkan.</li>
 		</ol>
