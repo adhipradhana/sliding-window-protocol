@@ -168,28 +168,6 @@ int main(int argc, char *argv[]) {
         fwrite(buffer, 1, buffer_size, file);
     }
 
-    time_stamp start_time = current_time();
-    while (elapsed_time(current_time(), start_time) < ACK_TIME) {
-        int packet_size = recvfrom(sock, packet, MAX_PACKET_LENGTH, MSG_WAITALL, (struct sockaddr *)&from, &fromlen);
-        if (packet_size < 0) {
-            cout << "Error on receiving message\n";
-            // exit(1);
-        }
-
-        // Get packet
-        read_packet(packet, &seq_num, &data_length, data, &is_check_sum_valid, &eot);
-
-        // Create ack
-        create_ack(ack, seq_num, is_check_sum_valid);
-
-        // Send ack
-        int ack_size = sendto(sock, ack, ACK_LENGTH, MSG_WAITALL, (struct sockaddr *)&from, fromlen);
-        if (ack_size < 0) {
-            cout << "Fail sending ack\n";
-        }
-    }
-
-
     fclose(file);
     return 0;
 }

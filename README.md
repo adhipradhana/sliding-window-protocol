@@ -66,7 +66,7 @@ $ ./recvfile <filename> <window_size> <buffer_size> <port>
 ```
 contoh:
 ```
-$ ./recvfile hasil.txt 100 200 3000
+$ ./recvfile data/hasil.txt 100 200 3000
 ```
 2. Jalankan Sender
 ```
@@ -74,7 +74,7 @@ $ ./sendfile <filename> <window_size> <buffer_size> <ip> <port>
 ```
 contoh:
 ```
-$ ./sendfile contoh.txt 100 200 localhost 3000
+$ ./sendfile data/contoh.txt 100 200 localhost 3000
 ```
 
 ## Simulasi Packet Loss
