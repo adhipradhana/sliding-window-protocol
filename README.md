@@ -25,40 +25,41 @@ Sender mendefinisikan window dengan memberi tanda menggunakan variabel LAR <i>(L
 Pada <b>sendfile.cpp</b> digunakan 2 thread untuk implementasi sliding windows protocol. thread pertama digunakan untuk mengirimkan paket ke client, thread kedua dipakai untuk menerima ACK atau NAK dari client.
 
 ## Documentation
-<ul>
+<ul style="list-style-type:disc">
 	<li>ack.cpp : Berikut fungsi dan kegunaannya dalam file ack.cpp
-		<ol>
+		<ol type="a">
 			<li>create_ack : Digunakan untuk membuat ACK (digunakan di recvfile yang nanti nya akan dikirim ke sendfile)</li>
 			<li>read_ack : Digunakan untuk membaca ACK (digunakan di sendfile untuk membaca ACK yang dikirim oleh recvfile)</li>
 		</ol>
 	</li>
 	<li>packet.cpp : Berikut fungsi dan kegunaannya dalam file packet.cpp
-		<ol>
+		<ol type="a">
 			<li>create_packet : Digunakan untuk membuat paket (yang akan dikirimkan oleh sendfile dan diterima oleh recvfile)</li>
 			<li>read_packet : Digunakan untuk membaca paket (yang akan dibaca oleh recvfile setelah dikirim oleh sendfile)</li>
 			<li>count_checksum : fungsi validasi checksum apakah paket diterima sesuai atau tidak</li>
 		</ol>
 	</li>
-	<li>recvfile.cpp : kasi penjelasan singkat aja</li>
+	<li>recvfile.cpp : program akan menerima paket. Untuk setiap paket, program akan mengecek apakah paket error atau tidak, jika error, program akan mengirimkan NAK kepada sender. Jika paket tidak error, maka paket akan dimasukan ke dalam buffer. Buffer kemudian akan dituliskan ke file eksternal. Hal ini akan diteruskan hingga eot, setelah mendapatkan sinyal eot, program akan berakhir.
+	</li>
 	<li>sendfile.cpp : Berikut fungsi dan kegunaannya dalam file sendfile.cpp
-		<ol>
-			<li>get_ack : singkat aja</li>
-			<li>main : singkat aja</li>
+		<ol type="a">
+			<li>get_ack : digunakan untuk menerima ACK/NAK dari recvfile</li>
+			<li>main : Program pertama-tama akan membuka file kemudian membaca besarnya data sesuai ukuran maximum buffer. Kemudian program akan mengirim packet-packet data sejumlah ukuran window. Program akan melakukan iterasi untuk mengecek apakah paket belum dikirim atau paket telah dikirim namun ACK belum didapatkan hingga timeout, jika kondisi ini terpenuhi maka program akan mengirim paket. Jika ACK dengan seqnum bersangkutan telah diterima, maka program akan menggeser buffer. Hal ini akan diteruskan hingga seluruh byte data telah dibaca dan dikirimkan.</li>
 		</ol>
 	</li>
 	<li>timer.h : Menentukan nilai timeout, waktu sekarang, <i>timestamp</i>, dan waktu yang sudah berlalu <i>(elapsed time)</i></li>
 </ul>
 
-#Cara Menjalankan Program
+## Cara Menjalankan Program
 
-## Instal
+### Instal
 Install **g++** dan jalankan di **Ubuntu** atau **macOS**. Jalankan command berikut:
 1. Make
 ```
 $ make
 ```
 
-## Menjalankan Program
+### Menjalankan Program
 1. Jalankan Receiver terlebih dahulu
 ```
 $ ./recvfile <filename> <window_size> <buffer_size> <port>
